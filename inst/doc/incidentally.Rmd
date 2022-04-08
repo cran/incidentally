@@ -1,0 +1,257 @@
+---
+title: "Introduction to Incidentally"
+author: "Zachary Neal"
+output: 
+  rmarkdown::html_vignette:
+  toc: true
+  
+bibliography: incidentally.bib
+link-citations: yes
+vignette: >
+  %\VignetteIndexEntry{Introduction to Incidentally}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::opts_knit$set(global.par = TRUE)
+```
+
+```{r, echo = FALSE, message = FALSE}
+library(igraph)
+oldpar <- par(mar = c(0, 0, 1, 0))
+par(mar = c(0, 0, 1, 0))
+```
+
+# Table of Contents {#toc}
+
+[<img src='../man/figures/logo.png' align="right" height="250" />](https://www.zacharyneal.com/backbone)
+
+1. [Introduction](#introduction)
+    a. [Welcome](#welcome)
+    b. [What are incidence matrices?](#what)
+    c. [Loading the package](#loading)
+    d. [Package overview](#overview)
+    e. [Supported data formats](#formats)
+2. [Fill and marginal constraints](#constraints)
+    a. [Fill/Density](#fill)
+    b. [Marginal sums](#sums)
+    c. [Marginal distributions](#distributions)
+3. [Generative models](#generative)
+    a. [Teams model](#team)
+    a. [Groups model](#group)
+    a. [Blau Space model](#blau)
+4. [Block models](#block)
+
+# Introduction {#introduction}
+
+## Welcome {#welcome}
+Thank you for your interest in the incidentally package! The incidentally package is designed to generate random incidence matrices and bipartite graphs under different constraints or using different generative models.
+
+For additional resources on the incidentally package, please see [https://www.rbackbone.net/](https://www.zacharyneal.com/backbone).
+
+If you have questions about the incidentally package or would like an incidentally hex sticker, please contact the maintainer Zachary Neal by email ([zpneal\@msu.edu](mailto:zpneal@msu.edu)) or via Twitter ([\@zpneal](https://twitter.com/zpneal)). Please report bugs in the backbone package at [https://github.com/zpneal/incidentally/issues](https://github.com/zpneal/backbone/issues).
+
+## What are incidence matrices? {#what}
+An *incidence* matrix is a binary $r \times c$ matrix **I** that records associations between $r$ objects represented by rows and $c$ objects represented by columns. In this matrix, $I_{ij} = 1$ if the i<sup>th</sup> row object is associated with the j<sup>th</sup> column object, and otherwise $I_{ij} = 0$. An incidence matrix can be used to represent a *bipartite*, *two-mode*, or *affiliation* network/graph, in which the rows represent one type of node, and the columns represent another type of node (e.g., people who author papers, species living in habitats) [@latapy2008]. An incidence matrix can also represent a *hypergraph*, in which each column represents a hyperedge and identifies the nodes that it connects.
+
+For example:
+$$I = \begin{bmatrix}
+1 & 0 & 1 & 0 & 1\\
+0 & 1 & 1 & 1 & 1\\
+0 & 1 & 0 & 1 & 0
+\end{bmatrix}
+$$
+is a $3 \times 5$ incidence matrix that represents the associations of the three row objects with the five column objects. If the rows represent people and the columns represent papers they wrote, then $I_{1,1} = 1$ indicates that person 1 wrote paper 1, while $I_{1,2} = 0$ indicates that person 1 did *not* write paper 2. One key property of an incidence matrix is its marginals, or when the matrix represents a bipartite network, its degree sequences. In this example, the row marginals are $R = \{3,4,2\}$, and the column marginals are $C = \{1,2,2,2,2\}$.
+
+## Loading the package {#loading}
+The incidentally package can be loaded in the usual way:
+```{r setup}
+set.seed(5)
+library(incidentally)
+```
+Upon successful loading, a startup message will display that shows the version number, citation, ways to get help, and ways to contact me. Here, we also `set.seed(5)` to ensure that the examples below are reproducible.
+
+## Package overview {#overview}
+The incidentally package offers multiple incidence matrix-generating functions that differ in how the resulting incidence matrix is constrained. These functions are described in detail below, but briefly:
+
+* [`incidence.from.probability()`](#probability) generates an incidence matrix with a given probabaility that $I_{ij} = 1$.
+
+* [`incidence.from.vector()`](#vector) generates an incidence matrix with given row and column marginals.
+
+* [`incidence.from.distribution()`](#distribution) generates an incidence matrix in which the row and column marginals follow a given distribution.
+
+* [`incidence.from.adjacency()`](#adjacency) uses one of several generative models to create a bipartite network (in the form of an incidence matrix) from a unipartite network (in the form of an adjacency matrix).
+
+Once an incidence matrix is generated using one of these functions, the [`add.blocks()`](#block) function can be used to add a block structure or planted partition.
+
+## Supported data formats {#formats}
+The incidentally package can return incidence matrices in several data formats that are useful for subsequent analysis in R:
+
+* **matrix** - An object of class `matrix`.
+
+* **edgelist** - An object of class `dataframe` containing two columns representing the IDs of connected row and column nodes.
+
+* **igraph** - An bipartite graph of class `igraph`.
+
+[back to Table of Contents](#toc)
+
+# Fill and marginal constraints {#constraints}
+## Fill/Density {#fill}
+The `incidence.from.probability()` function generates an incidence matrix with a given probabaility $p$ that $I_{ij} = 1$, and thus an overall fill rate or *density* of approximately $p$. We can use it to generate a $10 \times 10$ incidence matrix in which $Pr(I_{ij} = 1) = .2$:
+
+```{r}
+I <- incidence.from.probability(10, 10, .2)
+I
+mean(I)  #Fill rate/Density
+```
+
+By default, `incidence.from.probability()` only generates incidence matrices in which no rows or columns are completely empty or full. We can relax this constraint, allowing some rows/columns to contain all 0s or all 1s by specifying `constrain = FALSE`:
+```{r}
+I <- incidence.from.probability(10, 10, .2, constrain = FALSE)
+I
+mean(I)  #Fill rate/Density
+```
+[back to Table of Contents](#toc)
+
+## Marginal sums {#sums}
+The `incidence.from.vector()` function generates an incidence matrix with given row and column marginals. The generated incidence matrix represents a random draw from the space of all such matrices. We can use it to generate a random incidence matrix with $R = \{3,4,2\}$ and $C = \{1,2,2,2,2\}$:
+
+```{r}
+I <- incidence.from.vector(c(4,3,2), c(1,2,2,2,2))
+I
+rowSums(I)  #Row marginals
+colSums(I)  #Column marginals
+```
+[back to Table of Contents](#toc)
+
+## Marginal distributions {#distributions}
+The `incidence.from.distributions()` function generates an incidence matrix in which the row marginals approximately follow a given Beta distribution, and the column marginals approximately follow a given Beta distribution, described by two shape parameters. Beta distributions are used because they can flexibly capture many different distributional shapes:
+
+A $100 \times 100$ incidence matrix with **uniformly distributed** row and column marginals:
+```{r, fig.show="hold", out.width="33%"}
+I <- incidence.from.distribution(R = 100, C = 100, P = 0.2,
+  rowdist = c(1,1), coldist = c(1,1))
+hist(rowSums(I), main = "Row Marginals")
+hist(colSums(I), main = "Column Marginals")
+```
+
+A $100 \times 100$ incidence matrix with **right-tail distributed** row and column marginals:
+```{r, fig.show="hold", out.width="33%"}
+I <- incidence.from.distribution(R = 100, C = 100, P = 0.2,
+  rowdist = c(1,10), coldist = c(1,10))
+hist(rowSums(I), main = "Row Marginals")
+hist(colSums(I), main = "Column Marginals")
+```
+
+A $100 \times 100$ incidence matrix with **left-tail distributed** row and column marginals:
+```{r, fig.show="hold", out.width="33%"}
+I <- incidence.from.distribution(R = 100, C = 100, P = 0.2,
+  rowdist = c(10,1), coldist = c(10,1))
+hist(rowSums(I), main = "Row Marginals")
+hist(colSums(I), main = "Column Marginals")
+```
+
+A $100 \times 100$ incidence matrix with **normally distributed** row and column marginals:
+```{r, fig.show="hold", out.width="33%"}
+I <- incidence.from.distribution(R = 100, C = 100, P = 0.2,
+  rowdist = c(10,10), coldist = c(10,10))
+hist(rowSums(I), main = "Row Marginals")
+hist(colSums(I), main = "Column Marginals")
+```
+
+A $100 \times 100$ incidence matrix with **constant** row and column marginals:
+```{r}
+I <- incidence.from.distribution(R = 100, C = 100, P = 0.2,
+  rowdist = c(10000,10000), coldist = c(10000,10000))
+rowSums(I)
+colSums(I)
+```
+
+Of course, different types of Beta distributions can be combined. For example, we can generate a $100 \times 100$ incidence matrix in which the row marginals are **right-tailed**, but the column marginals are **left-tailed**:
+```{r, fig.show="hold", out.width="33%"}
+I <- incidence.from.distribution(R = 100, C = 100, P = 0.2,
+  rowdist = c(1,10), coldist = c(10,1))
+hist(rowSums(I), main = "Row Marginals")
+hist(colSums(I), main = "Column Marginals")
+```
+
+[back to Table of Contents](#toc)
+
+# Generative models {#generative}
+Focus theory suggests that social networks form, in part, because individuals share *foci* such as shared activities that create opportunity for interaction [@feld1981]. Individuals' memberships in foci can be represented by an incidence matrix or bipartite network. The social network that may emerge from these foci memberships can be obtained via bipartite projection, which yields an adjacency matrix or unipartite network in which people are connected by shared foci [@breiger1974;@neal2014].
+
+Focus theory therefore explains how incidence/bipartite $\rightarrow$ adjacency/unipartite. However, it is also possible that individuals' interactions in a social network can lead to the formation of new foci. That is, it is possible that adjacency/unipartite $\rightarrow$ incidence/bipartite. The `incidence.from.adjacency()` function implements three generative models (`model = c("team", "group", "blau")`) that reflect different ways that this might occur.
+
+## Teams model {#team}
+The *teams* model mirrors a team formation process [@guimera2005team] that depends on the structure of a given network in which cliques represent prior teams. Each column in the incidence matrix records the members of a new team that is formed from the incumbants of a randomly selected prior team (with probability $p$) and newcomers (with probability $1-p$).
+
+Given an initial social network among 15 people, we can simulate their formation of three (`k = 3`) new teams, where there is a `p = 0.75` probability that a prior team member joins the a new team:
+```{r, fig.show="hold", out.width="40%"}
+G <- erdos.renyi.game(15, .5)  #A random social network of 15 people, as igraph
+I <- incidence.from.adjacency(G, k = 3, p = .75, model = "team")  #Teams model
+class(I)  #Incidence matrix returned as igraph object
+V(I)$shape <- ifelse(V(I)$type, "square", "circle")  #Add shapes
+plot(G, main="Social Network")
+plot(I, layout = layout_as_bipartite(I), main="New Teams")
+```
+
+Notice that because the social network `G` is supplied as a `igraph` object, the generated incidence matrix `I` is returned as an `igraph` bipartite network, which facilitates subsequent plotting and analysis. In this example, team 16 is formed by 1, 8, 9, and 10. This team may have emerged from the prior 4-member team of 1, 6, 8, 10 (they are a clique in the social network). In this case, three positions on the new team are filled by incumbents from the original team (1, 8, and 10), while the final position is filled by a newcomer (9).
+
+[back to Table of Contents](#toc)
+
+## Groups model {#group}
+The *groups* model mirrors a social group formation process [@backstrom2006group] in which current group members try to recruit their friends. To ensure a minimum level of group cohesion, potential recruits join the group only if doing so would yield a new group in which the members' social ties have a density of at least $p$. Each column in the incidence matrix records the members of a new social group.
+
+Given an initial social network among 15 people, we can simulate their formation of three (`k = 3`) new groups, where each group has a minimum density of `p = 0.75`:
+```{r, fig.show="hold", out.width="40%"}
+G <- erdos.renyi.game(15, .33)  #A random social network of 15 people, as igraph
+I <- incidence.from.adjacency(G, k = 3, p = .75, model = "group")  #Groups model
+V(I)$shape <- ifelse(V(I)$type, "square", "circle")  #Add shapes
+plot(G, main="Social Network")
+plot(I, layout = layout_as_bipartite(I), main="New Groups")
+```
+
+In this example, group 18 is joined by 2, 4, 6, and 13. This group may have formed when the initial dyad of 2 & 4 attempted to recruit their friend 6. Person 6 would join because doing so would create a new group with a density of 1 (because 2, 4, and 6 are all connected), which is greater than 0.75. Next, 6 recruits 13. Person 13 would join because doing so would create a new group with a density of 0.83, which is greater than 0.75. Next, 13 recruits 9. Person 9 *would not* join because doing so would create a new group with a density of 0.6, which is less than 0.75.
+
+[back to Table of Contents](#toc)
+
+## Blau Space model {#blau}
+The *Blau Space* model mirrors an organizational recruitment process [@mcpherson1983ecology]. The given social network is embedded in a $d$ dimensional social space in which the dimensions are assumed to represent meaningful social distinctions, such that socially similar people are positioned nearby. Organizations recruit members from this space, recruiting people inside their niche with probability $p$, and outside their niche with probability $1-p$. Each column in the incidence matrix records the members of a new organization.
+
+Given a social network among 15 people, we can simulate their recruitment by three (`k = 3`) new organizations, where there is a `p = 0.9` probability that an individual inside an organization's two-dimensional (`d = 2`) niche becomes a member:
+```{r, fig.show="hold", out.width="40%"}
+G <- erdos.renyi.game(15, .33)  #A random social network of 15 people, as igraph
+I <- incidence.from.adjacency(G, k = 3, d = 2, p = .90, model = "blau")  #Groups model
+V(I)$shape <- ifelse(V(I)$type, "square", "circle")  #Add shapes
+plot(G, layout = layout_with_mds(G), main="Social Network")
+plot(I, layout = layout_as_bipartite(I), main="New Organizations")
+```
+
+The social network is plotted using a Multidimensional Scaling layout, and therefore shows the nodes' positions in the abstract Blau Space from which organizations recruit members. In this example, organization 16 recruits 1, 3, 5, and 7 as members. This organization's niche is located near the top of the space. People 1, 3, and 5 were likely inside its niche and therefore readily recruited (here, with a 90% probability). Although person 7 is outside it's niche (i.e., quite different from the organization's typical member), they were also recruited.
+
+[back to Table of Contents](#toc)
+
+# Block models {#block}
+The `add.blocks()` function shuffles an incidence matrix to have a block structure or planted partition while preserving the row and column marginals. For example, after generating an incidence matrix with a density of .5, we can plant a two-group (`block = 2`) partition in which the within-group `density = 0.8`:
+```{r}
+I <- incidence.from.probability(10, 10, .3)
+I
+rowSums(I)
+colSums(I)
+I <- add.blocks(I, blocks = 2, density = .8)
+I
+rowSums(I)
+colSums(I)
+```
+
+In this example, the row objects are partitioned into two randomly-sized groups labeled `A` and `B`, and similarly the column objects are partitioned into two randomly-sized groups labeled `A` and `B`. There is a 0.8 probability of a 1 occuring between a row and column object belonging to the same group. Note that the row and column marginals are preserved.
+
+[back to Table of Contents](#toc)
+
+```{r, echo = FALSE, message = FALSE}
+par(oldpar) #Restore old parameters
+```
+
+# References
