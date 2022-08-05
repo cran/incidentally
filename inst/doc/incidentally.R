@@ -79,14 +79,14 @@ plot(I, layout = layout_as_bipartite(I), main="New Team")
 
 ## ---- fig.show="hold", out.width="40%"----------------------------------------
 G <- erdos.renyi.game(15, .33)  #A random social network of 15 people, as igraph
-I <- incidence.from.adjacency(G, k = 1, p = .75, model = "group")  #Groups model
+I <- incidence.from.adjacency(G, k = 1, p = .75, model = "club")  #Groups model
 V(I)$shape <- ifelse(V(I)$type, "square", "circle")  #Add shapes
 plot(G, main="Social Network")
 plot(I, layout = layout_as_bipartite(I), main="New Group")
 
 ## ---- fig.show="hold", out.width="40%"----------------------------------------
 G <- erdos.renyi.game(15, .5)  #A random social network of 15 people, as igraph
-I <- incidence.from.adjacency(G, k = 1, p = .95, model = "blau")  #Groups model
+I <- incidence.from.adjacency(G, k = 1, p = .95, model = "org")  #Groups model
 V(I)$shape <- ifelse(V(I)$type, "square", "circle")  #Add shapes
 plot(G, layout = layout_with_mds(G), main="Social Network")
 plot(I, layout = layout_as_bipartite(I), main="New Organizations")

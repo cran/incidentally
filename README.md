@@ -5,10 +5,15 @@
 [![](https://www.r-pkg.org/badges/version/incidentally?color=orange)](https://cran.r-project.org/package=incidentally)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/incidentally?color=blue)](https://cran.r-project.org/package=incidentally)
 [![](http://cranlogs.r-pkg.org/badges/last-month/incidentally?color=green)](https://cran.r-project.org/package=incidentally)
+[![DOI:10.31219/osf.io/ectms](http://img.shields.io/badge/DOI-10.31219/osf.io/ectms-B31B1B.svg)](https://doi.org/10.31219/osf.io/ectms)
 <!-- badges: end -->
 
 ## Welcome
-Welcome to the `incidentally` package\! The incidentally package implements methods to generate incidence matrices, which can represent bipartite (aka two-mode, affiliation) networks. It is currently *under development* but the existing functions should mostly work.
+Welcome to the `incidentally` package\! The incidentally package implements methods to generate incidence matrices, which can represent bipartite (aka two-mode, affiliation) networks.
+
+The `incidentally` package can be cited as:
+
+**Neal, Z. P. (2022). incidentally: An R package for generating incidence matrices and bipartite graphs. *OSF Preprints*. [https://doi.org/10.31219/osf.io/ectms](https://doi.org/10.31219/osf.io/ectms)**
 
 ## Installation
 The /release branch contains the current CRAN release of the incidentally package. You can install it from [CRAN](https://CRAN.R-project.org) with:
