@@ -4,7 +4,7 @@ knitr::opts_knit$set(global.par = TRUE)
 
 ## ---- echo = FALSE, message = FALSE-------------------------------------------
 library(igraph)
-oldpar <- par(mar = c(0, 0, 1, 0))
+oldmar <- par()$mar
 par(mar = c(0, 0, 1, 0))
 
 ## ---- echo = FALSE, results = FALSE-------------------------------------------
@@ -108,6 +108,6 @@ blocked  #Blocked matrix
 all(rowSums(I)==rowSums(blocked)) #Row marginals preserved
 all(colSums(I)==colSums(blocked)) #Column marginals preserved
 
-## ---- echo = FALSE, message = FALSE-------------------------------------------
-par(oldpar) #Restore old parameters
+## ---- echo = FALSE------------------------------------------------------------
+par(mar = oldmar)
 

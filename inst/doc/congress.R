@@ -4,7 +4,7 @@ knitr::opts_knit$set(global.par = TRUE)
 
 ## ---- echo = FALSE, message = FALSE-------------------------------------------
 library(igraph)
-oldpar <- par(mar = c(0, 0, 1, 0))
+oldmar <- par()$mar
 par(mar = c(0, 0, 1, 0))
 
 ## -----------------------------------------------------------------------------
@@ -49,6 +49,6 @@ E(signed)$color[which(E(signed)$weight==-1)] <- rgb(1,0,0,.01)  #Define color of
 layout <- layout_nicely(delete_edges(signed, which(E(signed)$weight==-1)))  #Get layout based on positive edges
 plot(signed, vertex.label = NA, vertex.color = V(signed)$color, vertex.frame.color = NA, vertex.size = 10, layout = layout)
 
-## ---- echo = FALSE, message = FALSE-------------------------------------------
-par(oldpar) #Restore old parameters
+## ---- echo = FALSE------------------------------------------------------------
+par(mar = oldmar)
 

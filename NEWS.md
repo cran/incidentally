@@ -3,12 +3,19 @@ title: "NEWS"
 output: html_document
 ---
 
+## incidentally 1.0.2
+
+* added reference to Neal (2022) for incidence.from.congress()
+* added reference to Neal (2023) for incidence.from.adjacency()
+* `incidence.from.congress()` includes bill attributes indicating the number of (co-)sponsors from each party
+* fixed minor bugs introduced by `igraph 1.4.0`
+
 ## incidentally 1.0.1
 
 * fixed bug in `incidence.from.congress()` when bills do not have a sponsor
 * `incidence.from.congress()` excludes non-voting members by default
 * `incidence.from.congress()` includes a bill attribute indicating the bill's sponsor's party
-* renamed `group' model as `club' model, and renamed `blau' model as `organizations' model in `incidence.from.adjacency()`
+* renamed `group' model as `club` model, and renamed `blau` model as `organizations` model in `incidence.from.adjacency()`
 
 ## incidentally 1.0.0
 
